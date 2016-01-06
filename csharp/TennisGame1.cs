@@ -1,86 +1,102 @@
+
 using System;
-using NUnit.Framework;
 
 namespace Tennis
 {
-  class TennisGame1 : TennisGame
-  {
-    private int m_score1 = 0;
-    private int m_score2 = 0;
-    private string player1Name;
-    private string player2Name;
-
-    public TennisGame1 (string player1Name, string player2Name)
+    class TennisGame1 : TennisGame
     {
-      this.player1Name = player1Name;
-      this.player2Name = player2Name;
-    }
+        private int scorePlayer1 = 0;
+        private int scorePlayer2 = 0;
 
-    public void WonPoint (string playerName)
-    {
-      if (playerName == "player1")
-        m_score1 += 1;
-      else
-        m_score2 += 1;
-    }
+        private readonly string player1Name;
+        private readonly string player2Name;
 
-    public string GetScore ()
-    {
-      String score = "";
-      int tempScore=0;
-      if (m_score1==m_score2)
-      {
-        switch (m_score1)
+        public TennisGame1(string player1Name, string player2Name)
         {
-        case 0:
-          score = "Love-All";
-          break;
-        case 1:
-          score = "Fifteen-All";
-          break;
-        case 2:
-          score = "Thirty-All";
-          break;
-        default:
-          score = "Deuce";
-          break;
-          
+            this.player1Name = player1Name;
+            this.player2Name = player2Name;
         }
-      }
-      else if (m_score1>=4 || m_score2>=4)
-      {
-        int minusResult = m_score1-m_score2;
-        if (minusResult==1) score ="Advantage player1";
-        else if (minusResult ==-1) score ="Advantage player2";
-        else if (minusResult>=2) score = "Win for player1";
-        else score ="Win for player2";
-      }
-      else
-      {
-        for (int i=1; i<3; i++)
-        {
-          if (i==1) tempScore = m_score1;
-          else { score+="-"; tempScore = m_score2;}
-          switch(tempScore)
-          {
-          case 0:
-            score+="Love";
-            break;
-          case 1:
-            score+="Fifteen";
-            break;
-          case 2:
-            score+="Thirty";
-            break;
-          case 3:
-            score+="Forty";
-            break;
-          }
-        }
-      }
-      return score;
-    }
-  }
 
+        public void WonPoint(string playerName)
+        {
+            if (string.IsNullOrEmpty(playerName))
+                throw new ArgumentNullException(playerName);
+
+            if (playerName!= player1Name && playerName != player2Name)
+                throw new ArgumentException("Unknown player", playerName);
+
+            if (playerName == player1Name)
+                scorePlayer1 += 1;
+            else
+                scorePlayer2 += 1;
+        }
+
+        public string GetScore()
+        {
+            if (scorePlayer1 <= Convert.ToInt32(IndividualScoreValues.Forty) &&
+                scorePlayer2 <= Convert.ToInt32(IndividualScoreValues.Forty) && 
+                !(scorePlayer1 == scorePlayer2 && scorePlayer1 == 3))
+            {
+                return StandardScore();
+            }
+
+            return AtLeastOneScoreOverFourPoints();
+        }
+
+        private string StandardScore()
+        {
+            if (scorePlayer1 == scorePlayer2)
+            {
+                if (scorePlayer1 == Convert.ToInt32(IndividualScoreValues.Forty))
+                    return EqualScoreFourtyAndOver();
+
+                return EqualScoreUnderFortyFormat();
+            }
+
+            return string.Format("{0}-{1}", elementaryScoreNames[scorePlayer1], elementaryScoreNames[scorePlayer2]);
+        }
+
+        private string EqualScoreFourtyAndOver()
+        {
+            return advancedScoreNames[0]; 
+        }
+
+        private string AtLeastOneScoreOverFourPoints()
+        {
+            int scoresDifference = scorePlayer1 - scorePlayer2;
+            string scoreFormat = advancedScoreNames[Math.Min(Math.Abs(scoresDifference), 2)];
+
+            // Scores are equal
+            if (scoresDifference==0)
+            {
+                return scoreFormat;
+            }
+
+            return string.Format(scoreFormat, scoresDifference>0 ? player1Name: player2Name);
+        }
+         
+        private readonly string[] elementaryScoreNames = new string[4]
+        {
+            "Love","Fifteen","Thirty","Forty"
+        };
+
+        private readonly string[] advancedScoreNames = new string[3]
+        {
+            "Deuce", "Advantage {0}", "Win for {0}"
+        };
+
+        private string EqualScoreUnderFortyFormat()
+        {
+            return string.Format("{0}-All", elementaryScoreNames[scorePlayer1]);
+        }
+    }
+
+    internal enum IndividualScoreValues : int
+    {
+        Love = 0,
+        Fifteen = 1,
+        Thirty = 2,
+        Forty = 3,
+    }
 }
 
